@@ -10,7 +10,7 @@ async def fetch_stock_price(server_name: str):
     2. ใช้ httpx.AsyncClient() ดึงข้อมูลเพื่อไม่ให้เกิดการ Block สัญญาณ Event Loop
     3. นำข้อมูล JSON (server และ price_usd) มาจัดฟอร์แมตแสดงผล
     """
-    url = f"http://172.16.2.117:8088/price/{server_name}"
+    url = f"http://127.0.0.1:8088/price/{server_name}"
     
     async with httpx.AsyncClient() as client:
         response = await client.get(url)
