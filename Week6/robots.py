@@ -33,7 +33,13 @@ async def grab_part(client: httpx.AsyncClient, robot_id: str, part: str):
 
 async def run_robot_task(client: httpx.AsyncClient, robot_id: str):
     """สั่งให้หุ่นยนต์ 1 ตัว ทำการหยิบชิ้นส่วน A, B, และ C ตามลำดับ"""
-    # TODO: วนลูปหยิบชิ้นส่วนใน PARTS ตามลำดับเรียงกัน (Sequential inside single robot)
+    results = []
+    for part in PARTS:
+        print(f"[{robot_id}] Grabbing part '{part}'...")
+        res = await grab_part(client, robot_id, part)
+        results.append(res)
+        print(f"[{robot_id}] Finished part '{part}': {res}")
+    return results
     pass
 
 async def main():
