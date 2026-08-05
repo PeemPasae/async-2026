@@ -5,12 +5,12 @@ import httpx
 # ==========================================
 # 1. Configuration & Constants
 # ==========================================
-STUDENT_ID = "" 
-BASE_URL = ""
+STUDENT_ID = "6710301005" 
+BASE_URL = "http://172.16.2.117:8080"
 
 # กำหนดลำดับชิ้นส่วนและหุ่นยนต์
 PARTS = ["A", "B", "C"]
-ROBOTS = ["robot_1", "robot_2", "robot_3"]
+ROBOTS = ["robot_1", "robot_2", "robot_3", "robot_4"]
 
 # ==========================================
 # 2. Async Functions Development
@@ -19,12 +19,19 @@ ROBOTS = ["robot_1", "robot_2", "robot_3"]
 async def reset_factory(client: httpx.AsyncClient):
     """ส่ง Request เพื่อทำการ Reset สถานะของหุ่นยนต์ทั้งหมดของรหัสนักเรียนนี้"""
     # TODO: เติมโค้ดการส่ง POST request ไปยัง /student/{STUDENT_ID}/reset
+    response = await client.post(f"/student/{STUDENT_ID}/reset")
+    return response.json()
     pass
 
 async def grab_part(client: httpx.AsyncClient, robot_id: str, part: str):
     """สั่งให้หุ่นยนต์หยิบชิ้นส่วน 1 ชิ้น"""
     # TODO: เติมโค้ดส่ง POST request ไปยัง /student/{STUDENT_ID}/robot/{robot_id}/grab
     # พร้อมแนบ JSON Payload {"part": part}
+    response = await client.post(
+        f"/student/{STUDENT_ID}/robot/{robot_id}/grab",
+        json={"part": part}
+    )
+    return response.json()
     pass
 
 async def run_robot_task(client: httpx.AsyncClient, robot_id: str):
