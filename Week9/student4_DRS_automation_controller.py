@@ -2,8 +2,8 @@ import asyncio
 import redis.asyncio as redis
 
 # ⚙️ CONFIGURATION
-REDIS_HOST = 'localhost'
-GROUP_ID = 'g01'
+REDIS_HOST = '172.20.56.236'
+GROUP_ID = 'g05'
 STUDENT_ID = '66010004'
 
 STREAM_KEY = f"f1:telemetry:{GROUP_ID}"

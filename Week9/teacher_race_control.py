@@ -6,7 +6,7 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.console import Console
 
-REDIS_HOST = 'localhost'  # IP เครื่องครู
+REDIS_HOST = '172.20.56.236'  # IP เครื่องครู
 TOTAL_GROUPS = 8          # จำนวนกลุ่มทั้งหมด (g01 - g08)
 FINISH_DISTANCE = 10000.0 # 10 km (10,000 เมตร)
 

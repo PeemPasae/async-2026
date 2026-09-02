@@ -5,9 +5,9 @@ import json
 import redis.asyncio as redis
 
 # ⚙️ CONFIGURATION
-REDIS_HOST = 'localhost'     # IP ของ Redis Server (เครื่องครู)
+REDIS_HOST = '172.16.46.79' # IP ของ Redis Server (เครื่องครู)
 GROUP_ID = 'g01'             # เลขกลุ่ม เช่น g01 - g08
-STUDENT_ID = '66010001'      # รหัสนักศึกษาตนเอง
+STUDENT_ID = '6710301005'      # รหัสนักศึกษาตนเอง
 
 STREAM_KEY = f"f1:telemetry:{GROUP_ID}"
 FINISH_DISTANCE = 10000.0    # 10,000 เมตร (10 km)
@@ -46,7 +46,7 @@ async def produce_f1_telemetry():
 
     try:
         while True:
-            speed_kmh = round(random.uniform(180.0, 330.0), 1)
+            speed_kmh = round(random.uniform(190.0, 330.0), 1)  # ความเร็วสุ่มระหว่าง 200 - 350 km/h
             
             # คำนวณระยะทางที่เพิ่มขึ้นใน 0.05 วินาที
             distance_delta = (speed_kmh * 1000.0 / 3600.0) * dt

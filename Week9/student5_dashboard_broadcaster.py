@@ -3,7 +3,7 @@ import json
 import redis.asyncio as redis
 
 # ⚙️ CONFIGURATION
-REDIS_HOST = 'localhost'
+REDIS_HOST = '172.20.56.236'
 GROUP_ID = 'g01'
 STUDENT_ID = '66010005'
 
