@@ -75,6 +75,7 @@ class SecureTankGameServer:
                             "y": random.randint(0, GRID_SIZE - 1),
                             "hp": 100,
                             "dir": "UP",
+                            "score": 0,
                             "last_fire_time": 0.0,
                             "next_action": None
                         }
@@ -133,6 +134,14 @@ class SecureTankGameServer:
             for team, p in list(self.players.items()):
                 if p["hp"] > 0 and b["x"] == p["x"] and b["y"] == p["y"] and b["owner"] != team:
                     p["hp"] = max(0, p["hp"] - 20)
+
+                    # 🎯 ยิงโดน! เพิ่มแต้มให้เจ้าของกระสุน
+                    owner_team = b["owner"]
+                    if owner_team in self.players:
+                        self.players[owner_team]["score"] = self.players[owner_team].get("score", 0) + 1
+                        print(f"🎯 [HIT] Team '{owner_team}' scored a hit on '{team}'! "
+                              f"(Score: {self.players[owner_team]['score']})")
+
                     if p["hp"] <= 0:
                         print(f"💀 [DESTROYED] Team '{team}' eliminated!")
                     hit = True

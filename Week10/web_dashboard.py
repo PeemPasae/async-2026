@@ -28,7 +28,7 @@ class ConnectionManager:
 manager = ConnectionManager()
 
 async def redis_listener():
-    r = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
+    r = redis.Redis(host='172.20.56.244', port=6379, db=0, decode_responses=True)
     pubsub = r.pubsub()
     await pubsub.subscribe("game:state")
     
@@ -131,6 +131,10 @@ HTML_CONTENT = """
             padding: 2px 8px;
             border-radius: 4px;
         }
+        #scoreboard-wrapper {
+            max-height: 320px;
+            overflow-y: auto;
+        }
         table {
             width: 100%;
             border-collapse: collapse;
@@ -140,7 +144,11 @@ HTML_CONTENT = """
             padding: 8px 10px;
             text-align: left;
         }
-        th {
+        thead th {
+            position: sticky;
+            top: 0;
+            background-color: #1e1e1e;
+            z-index: 1;
             border-bottom: 2px solid #333;
             color: #aaa;
         }
@@ -171,6 +179,12 @@ HTML_CONTENT = """
         }
         .status-dead { color: #ff5252; font-weight: bold; }
         .status-alive { color: #4caf50; font-weight: bold; }
+        .score-value {
+            font-weight: bold;
+            color: #ffca28;
+            font-family: monospace;
+            font-size: 15px;
+        }
         #event-log {
             height: 180px;
             overflow-y: auto;
@@ -188,6 +202,7 @@ HTML_CONTENT = """
         .log-hit { color: #ff5252; }
         .log-join { color: #00e5ff; }
         .log-system { color: #ffca28; }
+        .log-score { color: #ffca28; }
     </style>
 </head>
 <body>
@@ -207,18 +222,21 @@ HTML_CONTENT = """
 
             <div class="card">
                 <div class="card-title">📊 Player Status / Scoreboard</div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Team</th>
-                            <th>HP</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="player-table">
-                        <tr><td colspan="3" style="text-align:center; color:#666;">No players joined</td></tr>
-                    </tbody>
-                </table>
+                <div id="scoreboard-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Team</th>
+                                <th>Score</th>
+                                <th>HP</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="player-table">
+                            <tr><td colspan="4" style="text-align:center; color:#666;">No players joined</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             <div class="card">
@@ -329,28 +347,39 @@ HTML_CONTENT = """
 
             const players = state.players || {};
             Object.keys(players).forEach(team => {
+                const currentScore = players[team].score || 0;
                 if (!lastPlayersState[team]) {
                     logEvent(`Player '${team}' joined the game.`, "join");
-                } else if (lastPlayersState[team].hp > 0 && players[team].hp <= 0) {
-                    logEvent(`💀 Player '${team}' was eliminated!`, "hit");
-                } else if (lastPlayersState[team].hp > players[team].hp) {
-                    const damage = lastPlayersState[team].hp - players[team].hp;
-                    logEvent(`🎯 '${team}' took ${damage} damage! (HP: ${players[team].hp})`, "hit");
+                } else {
+                    const previousScore = lastPlayersState[team].score || 0;
+                    if (currentScore > previousScore) {
+                        logEvent(`🎯 '${team}' scored a hit! (Score: ${currentScore})`, "score");
+                    }
+                    if (lastPlayersState[team].hp > 0 && players[team].hp <= 0) {
+                        logEvent(`💀 Player '${team}' was eliminated!`, "hit");
+                    } else if (lastPlayersState[team].hp > players[team].hp) {
+                        const damage = lastPlayersState[team].hp - players[team].hp;
+                        logEvent(`🎯 '${team}' took ${damage} damage! (HP: ${players[team].hp})`, "hit");
+                    }
                 }
             });
             lastPlayersState = JSON.parse(JSON.stringify(players));
 
             const teams = Object.keys(players);
             if (teams.length === 0) {
-                playerTable.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#666;">No players joined</td></tr>`;
+                playerTable.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#666;">No players joined</td></tr>`;
                 return;
             }
 
-            playerTable.innerHTML = teams.map(team => {
+            // เรียงลำดับตามแต้มมากไปน้อย
+            const sortedTeams = [...teams].sort((a, b) => (players[b].score || 0) - (players[a].score || 0));
+
+            playerTable.innerHTML = sortedTeams.map(team => {
                 const p = players[team];
                 const isAlive = p.hp > 0;
                 const hpPercent = Math.max(0, p.hp);
                 const teamColor = getTeamColor(team);
+                const score = p.score || 0;
                 const statusHtml = isAlive 
                     ? `<span class="status-alive">ALIVE</span>` 
                     : `<span class="status-dead">DEAD</span>`;
@@ -361,6 +390,7 @@ HTML_CONTENT = """
                             <span class="color-badge" style="background-color: ${teamColor};"></span>
                             <b>${team}</b>
                         </td>
+                        <td><span class="score-value">${score}</span></td>
                         <td>
                             <div class="hp-bar-bg">
                                 <div class="hp-bar-fill" style="width: ${hpPercent}%; background-color: ${teamColor};"></div>
@@ -425,11 +455,12 @@ HTML_CONTENT = """
                     ctx.strokeStyle = '#ffffff';
                     ctx.stroke();
 
-                    // ข้อความชื่อทีม
+                    // ข้อความชื่อทีม + แต้ม
                     ctx.fillStyle = '#ffffff';
                     ctx.font = `bold ${Math.max(9, Math.floor(CELL_SIZE / 3))}px Arial`;
                     ctx.textAlign = 'center';
-                    ctx.fillText(team, centerX, p.y * CELL_SIZE + (CELL_SIZE > 30 ? 12 : 8));
+                    const score = p.score || 0;
+                    ctx.fillText(`${team} (${score})`, centerX, p.y * CELL_SIZE + (CELL_SIZE > 30 ? 12 : 8));
                 }
             });
 
